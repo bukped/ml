@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ilustrasi Cosine Similarity</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #3498db;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .canvas-container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .formula {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            border: 2px solid #3498db;
+        }
+        .example {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+        .similarity-scale {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, #e74c3c 0%, #f39c12 25%, #f1c40f 50%, #2ecc71 75%, #27ae60 100%);
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .interactive-demo {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .result {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+            margin: 15px 0;
+            font-size: 1.1em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🔄 Cosine Similarity Explained</h1>
+        
+        <div class="section">
+            <h2>📐 Konsep Dasar</h2>
+            <p>Cosine similarity mengukur <strong>sudut</strong> antara dua vektor, bukan jarak euclidean. Semakin kecil sudutnya, semakin mirip kedua vektor.</p>
+            
+            <div class="formula">
+                <strong>cos(θ) = (A · B) / (||A|| × ||B||)</strong>
+            </div>
+            
+            <div class="grid">
+                <div class="canvas-container">
+                    <h3>Vektor 2D - Konsep Dasar</h3>
+                    <canvas id="basicCanvas" width="350" height="300"></canvas>
+                    <p><em>Sudut θ menentukan similarity</em></p>
+                </div>
+                
+                <div class="canvas-container">
+                    <h3>Data Anda (EEG vs Visual)</h3>
+                    <canvas id="dataCanvas" width="350" height="300"></canvas>
+                    <p><em>Proyeksi 2D dari data 12 dimensi</em></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Skala Interpretasi</h2>
+            <div class="similarity-scale">
+                <span>-1.0<br>Berlawanan</span>
+                <span>0.0<br>Orthogonal</span>
+                <span>0.5<br>Agak Mirip</span>
+                <span>0.8<br>Mirip</span>
+                <span>1.0<br>Identik</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🧮 Perhitungan Data Anda</h2>
+            <div class="example">
+                <strong>EEG_flat:</strong> [0.3, 0.1, 0.8, 0.3, 0.2, 0.1, 0.1, 0.2, 0.1, 0.8, 0.1, 0.1]<br>
+                <strong>Visual_flat:</strong> [0.2, 0.1, 0.9, 0.2, 0.3, 0.1, 0.1, 0.3, 0.1, 0.9, 0.1, 0.1]
+            </div>
+            
+            <div class="result">
+                <strong>Cosine Similarity = 0.993</strong><br>
+                <em>Kedua vektor sangat mirip! 🎉</em>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎮 Demo Interaktif</h2>
+            <div class="interactive-demo">
+                <div class="grid">
+                    <div>
+                        <div class="slider-container">
+                            <label>Vektor A - X:</label>
+                            <input type="range" id="ax" class="slider" min="-10" max="10" value="3" step="0.1">
+                            <span id="ax-value">3</span>
+                        </div>
+                        <div class="slider-container">
+                            <label>Vektor A - Y:</label>
+                            <input type="range" id="ay" class="slider" min="-10" max="10" value="4" step="0.1">
+                            <span id="ay-value">4</span>
+                        </div>
+                        <div class="slider-container">
+                            <label>Vektor B - X:</label>
+                            <input type="range" id="bx" class="slider" min="-10" max="10" value="2" step="0.1">
+                            <span id="bx-value">2</span>
+                        </div>
+                        <div class="slider-container">
+                            <label>Vektor B - Y:</label>
+                            <input type="range" id="by" class="slider" min="-10" max="10" value="3" step="0.1">
+                            <span id="by-value">3</span>
+                        </div>
+                    </div>
+                    
+                    <div class="canvas-container">
+                        <h3>Demo Interaktif</h3>
+                        <canvas id="interactiveCanvas" width="350" height="300"></canvas>
+                        <div class="result">
+                            <span id="similarity-result">Cosine Similarity: 0.992</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Visualisasi Dimensi Tinggi</h2>
+            <div class="canvas-container">
+                <h3>Representasi Data 12D sebagai Bar Chart</h3>
+                <canvas id="barChart" width="800" height="400"></canvas>
+                <p><em>Perbandingan nilai EEG vs Visual untuk setiap dimensi</em></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data asli
+        const EEG_flat = [0.3, 0.1, 0.8, 0.3, 0.2, 0.1, 0.1, 0.2, 0.1, 0.8, 0.1, 0.1];
+        const Visual_flat = [0.2, 0.1, 0.9, 0.2, 0.3, 0.1, 0.1, 0.3, 0.1, 0.9, 0.1, 0.1];
+
+        // Fungsi untuk menghitung cosine similarity
+        function cosineSimilarity(a, b) {
+            const dotProduct = a.reduce((sum, ai, i) => sum + ai * b[i], 0);
+            const magnitudeA = Math.sqrt(a.reduce((sum, ai) => sum + ai * ai, 0));
+            const magnitudeB = Math.sqrt(b.reduce((sum, bi) => sum + bi * bi, 0));
+            return dotProduct / (magnitudeA * magnitudeB);
+        }
+
+        // Canvas 1: Konsep dasar
+        function drawBasicConcept() {
+            const canvas = document.getElementById('basicCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= canvas.width; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= canvas.height; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+            
+            // Vectors
+            const scale = 80;
+            const vecA = [3, 2];
+            const vecB = [2, 3];
+            
+            // Vector A (red)
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + vecA[0] * scale / 4, centerY - vecA[1] * scale / 4);
+            ctx.stroke();
+            
+            // Vector B (blue)
+            ctx.strokeStyle = '#3498db';
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + vecB[0] * scale / 4, centerY - vecB[1] * scale / 4);
+            ctx.stroke();
+            
+            // Angle arc
+            const angle = Math.atan2(vecB[1], vecB[0]) - Math.atan2(vecA[1], vecA[0]);
+            ctx.strokeStyle = '#f39c12';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 40, -Math.atan2(vecA[1], vecA[0]), -Math.atan2(vecB[1], vecB[0]), false);
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = '16px Arial';
+            ctx.fillText('A', centerX + vecA[0] * scale / 4 + 10, centerY - vecA[1] * scale / 4 - 10);
+            ctx.fillStyle = '#3498db';
+            ctx.fillText('B', centerX + vecB[0] * scale / 4 + 10, centerY - vecB[1] * scale / 4 - 10);
+            ctx.fillStyle = '#f39c12';
+            ctx.fillText('θ', centerX + 50, centerY - 10);
+            
+            // Similarity value
+            const similarity = cosineSimilarity(vecA, vecB);
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '14px Arial';
+            ctx.fillText(`cos(θ) = ${similarity.toFixed(3)}`, 10, 20);
+        }
+
+        // Canvas 2: Data visualization
+        function drawDataVisualization() {
+            const canvas = document.getElementById('dataCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= canvas.width; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= canvas.height; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+            
+            // Simplified 2D projection of 12D data
+            const eegSum = EEG_flat.reduce((a, b) => a + b, 0);
+            const visualSum = Visual_flat.reduce((a, b) => a + b, 0);
+            const eegVar = EEG_flat.reduce((sum, val) => sum + Math.pow(val - eegSum/12, 2), 0);
+            const visualVar = Visual_flat.reduce((sum, val) => sum + Math.pow(val - visualSum/12, 2), 0);
+            
+            const scale = 100;
+            const eegProj = [eegSum * scale, eegVar * scale * 10];
+            const visualProj = [visualSum * scale, visualVar * scale * 10];
+            
+            // EEG vector (green)
+            ctx.strokeStyle = '#27ae60';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + eegProj[0] / 4, centerY - eegProj[1] / 4);
+            ctx.stroke();
+            
+            // Visual vector (purple)
+            ctx.strokeStyle = '#8e44ad';
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + visualProj[0] / 4, centerY - visualProj[1] / 4);
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#27ae60';
+            ctx.font = '16px Arial';
+            ctx.fillText('EEG', centerX + eegProj[0] / 4 + 10, centerY - eegProj[1] / 4 - 10);
+            ctx.fillStyle = '#8e44ad';
+            ctx.fillText('Visual', centerX + visualProj[0] / 4 + 10, centerY - visualProj[1] / 4 - 10);
+            
+            // Actual similarity
+            const similarity = cosineSimilarity(EEG_flat, Visual_flat);
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Similarity = ${similarity.toFixed(3)}`, 10, 20);
+        }
+
+        // Interactive canvas
+        function drawInteractive() {
+            const canvas = document.getElementById('interactiveCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Get slider values
+            const ax = parseFloat(document.getElementById('ax').value);
+            const ay = parseFloat(document.getElementById('ay').value);
+            const bx = parseFloat(document.getElementById('bx').value);
+            const by = parseFloat(document.getElementById('by').value);
+            
+            // Update value displays
+            document.getElementById('ax-value').textContent = ax;
+            document.getElementById('ay-value').textContent = ay;
+            document.getElementById('bx-value').textContent = bx;
+            document.getElementById('by-value').textContent = by;
+            
+            // Grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= canvas.width; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= canvas.height; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+            
+            const scale = 15;
+            
+            // Vector A
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + ax * scale, centerY - ay * scale);
+            ctx.stroke();
+            
+            // Vector B
+            ctx.strokeStyle = '#3498db';
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + bx * scale, centerY - by * scale);
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = '16px Arial';
+            ctx.fillText('A', centerX + ax * scale + 10, centerY - ay * scale - 10);
+            ctx.fillStyle = '#3498db';
+            ctx.fillText('B', centerX + bx * scale + 10, centerY - by * scale - 10);
+            
+            // Calculate and display similarity
+            const similarity = cosineSimilarity([ax, ay], [bx, by]);
+            document.getElementById('similarity-result').textContent = `Cosine Similarity: ${similarity.toFixed(3)}`;
+        }
+
+        // Bar chart
+        function drawBarChart() {
+            const canvas = document.getElementById('barChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const barWidth = 60;
+            const spacing = 10;
+            const startX = 40;
+            const maxHeight = 300;
+            const maxValue = Math.max(...EEG_flat, ...Visual_flat);
+            
+            // Title
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '20px Arial';
+            ctx.fillText('Perbandingan EEG vs Visual (12 Dimensi)', 200, 30);
+            
+            // Draw bars
+            for (let i = 0; i < EEG_flat.length; i++) {
+                const x = startX + i * (barWidth + spacing);
+                const eegHeight = (EEG_flat[i] / maxValue) * maxHeight;
+                const visualHeight = (Visual_flat[i] / maxValue) * maxHeight;
+                
+                // EEG bar
+                ctx.fillStyle = '#27ae60';
+                ctx.fillRect(x, canvas.height - eegHeight - 50, barWidth/2 - 5, eegHeight);
+                
+                // Visual bar
+                ctx.fillStyle = '#8e44ad';
+                ctx.fillRect(x + barWidth/2, canvas.height - visualHeight - 50, barWidth/2 - 5, visualHeight);
+                
+                // Labels
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '12px Arial';
+                ctx.fillText(`D${i+1}`, x + barWidth/4, canvas.height - 30);
+                
+                // Values
+                ctx.fillStyle = '#27ae60';
+                ctx.fillText(EEG_flat[i].toFixed(1), x, canvas.height - eegHeight - 55);
+                ctx.fillStyle = '#8e44ad';
+                ctx.fillText(Visual_flat[i].toFixed(1), x + barWidth/2, canvas.height - visualHeight - 55);
+            }
+            
+            // Legend
+            ctx.fillStyle = '#27ae60';
+            ctx.fillRect(canvas.width - 150, 60, 20, 15);
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '14px Arial';
+            ctx.fillText('EEG', canvas.width - 120, 72);
+            
+            ctx.fillStyle = '#8e44ad';
+            ctx.fillRect(canvas.width - 150, 85, 20, 15);
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillText('Visual', canvas.width - 120, 97);
+        }
+
+        // Initialize
+        drawBasicConcept();
+        drawDataVisualization();
+        drawInteractive();
+        drawBarChart();
+        
+        // Event listeners for interactive demo
+        ['ax', 'ay', 'bx', 'by'].forEach(id => {
+            document.getElementById(id).addEventListener('input', drawInteractive);
+        });
+    </script>
+</body>
+</html>
