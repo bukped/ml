@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConvTranspose2d dengan Proyeksi Visual</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .title {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+        .section {
+            margin: 40px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 6px solid #3498db;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.8em;
+        }
+        .visualization-container {
+            position: relative;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin: 30px 0;
+            overflow: hidden;
+        }
+        .grid-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .grid-section {
+            text-align: center;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .grid-section h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+        .feature-grid {
+            display: grid;
+            gap: 3px;
+            margin: 15px auto;
+            justify-content: center;
+            position: relative;
+        }
+        .grid-8x8 {
+            grid-template-columns: repeat(8, 25px);
+            grid-template-rows: repeat(8, 25px);
+        }
+        .grid-4x4 {
+            grid-template-columns: repeat(4, 30px);
+            grid-template-rows: repeat(4, 30px);
+        }
+        .grid-16x16 {
+            grid-template-columns: repeat(16, 15px);
+            grid-template-rows: repeat(16, 15px);
+        }
+        .pixel {
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.7);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .pixel:hover {
+            transform: scale(1.3);
+            z-index: 100;
+            border-color: #e74c3c;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        .input-pixel {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+        .kernel-pixel {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            font-weight: bold;
+        }
+        .output-pixel {
+            background: linear-gradient(45deg, #27ae60, #229954);
+        }
+        .selected {
+            border: 3px solid #f39c12 !important;
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.8) !important;
+            transform: scale(1.2) !important;
+            z-index: 50 !important;
+        }
+        .highlighted {
+            border: 3px solid #e74c3c !important;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6) !important;
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(231, 76, 60, 0.6); }
+            to { box-shadow: 0 0 20px rgba(231, 76, 60, 1); }
+        }
+        .projection-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .projection-line {
+            stroke: #e74c3c;
+            stroke-width: 2;
+            fill: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .projection-line.active {
+            opacity: 0.8;
+            animation: dashFlow 2s linear infinite;
+        }
+        .projection-line.input-to-kernel {
+            stroke: #3498db;
+            stroke-width: 3;
+        }
+        .projection-line.kernel-to-output {
+            stroke: #27ae60;
+            stroke-width: 3;
+        }
+        @keyframes dashFlow {
+            0% { stroke-dasharray: 5, 5; stroke-dashoffset: 10; }
+            100% { stroke-dasharray: 5, 5; stroke-dashoffset: 0; }
+        }
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .control-group label {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .control-group button, .control-group select {
+            padding: 12px 20px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            background: white;
+            color: #2c3e50;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .control-group button:hover, .control-group select:hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .info-panel {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #3498db;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: white;
+            border-radius: 25px;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        .step.active {
+            border-color: #e74c3c;
+            background: #e74c3c;
+            color: white;
+            transform: scale(1.1);
+        }
+        .step-number {
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .calculation-display {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            font-size: 14px;
+            min-height: 100px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #333;
+        }
+        .mode-switcher {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .mode-btn {
+            padding: 15px 30px;
+            margin: 0 10px;
+            border: 2px solid #3498db;
+            border-radius: 25px;
+            background: white;
+            color: #3498db;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .mode-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🔄 ConvTranspose2d dengan Proyeksi Visual</h1>
+        <p class="subtitle">nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1)</p>
+        
+        <div class="section">
+            <h2>🎯 Mode Visualisasi</h2>
+            <div class="mode-switcher">
+                <button class="mode-btn active" onclick="setMode('interactive')">🖱️ Interactive Mode</button>
+                <button class="mode-btn" onclick="setMode('animation')">🎬 Animation Mode</button>
+                <button class="mode-btn" onclick="setMode('detailed')">🔍 Detailed Analysis</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Proyeksi Input → Kernel → Output</h2>
+            
+            <div class="step-indicator">
+                <div class="step" id="step1">
+                    <div class="step-number">1</div>
+                    <span>Select Input Pixel</span>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <span>Apply Kernel</span>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <span>Generate Output</span>
+                </div>
+            </div>
+
+            <div class="visualization-container">
+                <svg class="projection-lines" id="projectionSvg"></svg>
+                
+                <div class="grid-container">
+                    <div class="grid-section">
+                        <h3>Input 8×8</h3>
+                        <div class="feature-grid grid-8x8" id="inputGrid"></div>
+                        <p>Click pixel untuk melihat proyeksi</p>
+                    </div>
+                    
+                    <div class="grid-section">
+                        <h3>Kernel 4×4</h3>
+                        <div class="feature-grid grid-4x4" id="kernelGrid"></div>
+                        <p>Weights yang dipelajari</p>
+                    </div>
+                    
+                    <div class="grid-section">
+                        <h3>Output 16×16</h3>
+                        <div class="feature-grid grid-16x16" id="outputGrid"></div>
+                        <p>Hasil konvolusi transpose</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(45deg, #3498db, #2980b9);"></div>
+                    <span>Input Pixel</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(45deg, #e74c3c, #c0392b);"></div>
+                    <span>Kernel Weight</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(45deg, #27ae60, #229954);"></div>
+                    <span>Output Pixel</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="border: 3px solid #f39c12; background: white;"></div>
+                    <span>Selected/Active</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎮 Interactive Controls</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Auto Demo:</label>
+                    <button id="autoDemoBtn" onclick="toggleAutoDemo()">▶️ Start Auto Demo</button>
+                </div>
+                <div class="control-group">
+                    <label>Speed:</label>
+                    <select id="speedSelect">
+                        <option value="2000">Slow (2s)</option>
+                        <option value="1000" selected>Normal (1s)</option>
+                        <option value="500">Fast (0.5s)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Show All:</label>
+                    <button onclick="showAllProjections()">🌟 Show All Projections</button>
+                </div>
+                <div class="control-group">
+                    <label>Reset:</label>
+                    <button onclick="resetVisualization()">🔄 Clear All</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>💡 Informasi Proyeksi</h3>
+            <div class="calculation-display" id="calculationDisplay">
+Klik pada input pixel untuk melihat bagaimana proyeksi bekerja.
+
+Proses ConvTranspose2d:
+1. Setiap input pixel (8×8) menjadi pusat operasi
+2. Kernel 4×4 ditempatkan dengan stride=2 
+3. Hasil dituliskan ke output 16×16
+4. Area overlap dijumlahkan
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📐 Rumus dan Penjelasan</h2>
+            <div class="calculation-display">
+Rumus Output Size:
+Output = (Input - 1) × stride - 2 × padding + kernel_size
+       = (8 - 1) × 2 - 2 × 1 + 4 
+       = 7 × 2 - 2 + 4 
+       = 14 - 2 + 4 = 16
+
+Posisi Output untuk Input(i,j):
+output_i = i × stride - padding = i × 2 - 1
+output_j = j × stride - padding = j × 2 - 1
+
+Area Output yang dipengaruhi: [output_i : output_i + 4, output_j : output_j + 4]
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'interactive';
+        let autoDemoInterval = null;
+        let selectedInputPixel = null;
+        let projectionLines = [];
+
+        // Generate sample data
+        function generateGrid(rows, cols, baseValue = 0.5) {
+            const data = [];
+            for (let i = 0; i < rows * cols; i++) {
+                data.push(baseValue + (Math.random() - 0.5) * 0.4);
+            }
+            return data;
+        }
+
+        const inputData = generateGrid(8, 8, 0.6);
+        const kernelData = generateGrid(4, 4, 0.5);
+        const outputData = generateGrid(16, 16, 0.3);
+
+        // Get pixel position in container
+        function getPixelPosition(gridId, index, gridSize) {
+            const grid = document.getElementById(gridId);
+            const rect = grid.getBoundingClientRect();
+            const containerRect = document.querySelector('.visualization-container').getBoundingClientRect();
+            
+            const row = Math.floor(index / gridSize);
+            const col = index % gridSize;
+            const pixelSize = gridSize === 8 ? 28 : gridSize === 4 ? 33 : 18;
+            const gap = 3;
+            
+            const x = rect.left - containerRect.left + col * pixelSize + gap * col + pixelSize / 2;
+            const y = rect.top - containerRect.top + row * pixelSize + gap * row + pixelSize / 2;
+            
+            return { x, y };
+        }
+
+        // Create SVG line
+        function createProjectionLine(x1, y1, x2, y2, className) {
+            const svg = document.getElementById('projectionSvg');
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('class', `projection-line ${className}`);
+            svg.appendChild(line);
+            return line;
+        }
+
+        // Clear all projection lines
+        function clearProjectionLines() {
+            const svg = document.getElementById('projectionSvg');
+            svg.innerHTML = '';
+            projectionLines = [];
+            
+            // Clear selections
+            document.querySelectorAll('.pixel').forEach(pixel => {
+                pixel.classList.remove('selected', 'highlighted');
+            });
+            
+            // Reset steps
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+        }
+
+        // Show projection for input pixel
+        function showProjection(inputIndex) {
+            clearProjectionLines();
+            selectedInputPixel = inputIndex;
+            
+            const inputRow = Math.floor(inputIndex / 8);
+            const inputCol = inputIndex % 8;
+            
+            // Calculate output position (with stride=2, padding=1)
+            const outputStartRow = inputRow * 2 - 1;
+            const outputStartCol = inputCol * 2 - 1;
+            
+            // Highlight selected input pixel
+            const inputPixels = document.querySelectorAll('#inputGrid .pixel');
+            inputPixels[inputIndex].classList.add('selected');
+            
+            // Show step 1
+            document.getElementById('step1').classList.add('active');
+            
+            setTimeout(() => {
+                // Highlight all kernel pixels
+                document.querySelectorAll('#kernelGrid .pixel').forEach(pixel => {
+                    pixel.classList.add('highlighted');
+                });
+                
+                // Show step 2
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step2').classList.add('active');
+                
+                // Draw lines from input to kernel
+                const inputPos = getPixelPosition('inputGrid', inputIndex, 8);
+                for (let k = 0; k < 16; k++) {
+                    const kernelPos = getPixelPosition('kernelGrid', k, 4);
+                    const line = createProjectionLine(inputPos.x, inputPos.y, kernelPos.x, kernelPos.y, 'input-to-kernel');
+                    setTimeout(() => line.classList.add('active'), k * 50);
+                    projectionLines.push(line);
+                }
+                
+                setTimeout(() => {
+                    // Show step 3
+                    document.getElementById('step2').classList.remove('active');
+                    document.getElementById('step3').classList.add('active');
+                    
+                    // Highlight output region and draw lines from kernel to output
+                    for (let kr = 0; kr < 4; kr++) {
+                        for (let kc = 0; kc < 4; kc++) {
+                            const outputRow = outputStartRow + kr;
+                            const outputCol = outputStartCol + kc;
+                            
+                            if (outputRow >= 0 && outputRow < 16 && outputCol >= 0 && outputCol < 16) {
+                                const outputIndex = outputRow * 16 + outputCol;
+                                const kernelIndex = kr * 4 + kc;
+                                
+                                // Highlight output pixel
+                                const outputPixels = document.querySelectorAll('#outputGrid .pixel');
+                                if (outputPixels[outputIndex]) {
+                                    outputPixels[outputIndex].classList.add('highlighted');
+                                }
+                                
+                                // Draw line from kernel to output
+                                const kernelPos = getPixelPosition('kernelGrid', kernelIndex, 4);
+                                const outputPos = getPixelPosition('outputGrid', outputIndex, 16);
+                                const line = createProjectionLine(kernelPos.x, kernelPos.y, outputPos.x, outputPos.y, 'kernel-to-output');
+                                setTimeout(() => line.classList.add('active'), (kr * 4 + kc) * 50);
+                                projectionLines.push(line);
+                            }
+                        }
+                    }
+                    
+                    // Update calculation display
+                    updateCalculationDisplay(inputRow, inputCol, outputStartRow, outputStartCol);
+                }, 500);
+            }, 800);
+        }
+
+        // Update calculation display
+        function updateCalculationDisplay(inputRow, inputCol, outputStartRow, outputStartCol) {
+            const display = document.getElementById('calculationDisplay');
+            display.innerHTML = `
+<strong>Input Pixel: (${inputRow}, ${inputCol})</strong>
+Value: ${inputData[inputRow * 8 + inputCol].toFixed(3)}
+
+<strong>Calculation:</strong>
+Output position = input × stride - padding
+Output row = ${inputRow} × 2 - 1 = ${outputStartRow}
+Output col = ${inputCol} × 2 - 1 = ${outputStartCol}
+
+<strong>Output Region Affected:</strong>
+Rows: ${Math.max(0, outputStartRow)} to ${Math.min(15, outputStartRow + 3)}
+Cols: ${Math.max(0, outputStartCol)} to ${Math.min(15, outputStartCol + 3)}
+
+<strong>Kernel Application:</strong>
+4×4 kernel applied to 4×4 output region
+Each kernel weight multiplied by input value
+Results accumulated in overlapping areas
+            `;
+        }
+
+        // Render grids
+        function renderGrid(gridId, data, size, className) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < data.length; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = `pixel ${className}`;
+                pixel.style.opacity = 0.3 + data[i] * 0.7;
+                pixel.textContent = (data[i] * 10).toFixed(0);
+                pixel.title = `Index: ${i}, Value: ${data[i].toFixed(3)}`;
+                
+                if (className === 'input-pixel') {
+                    pixel.addEventListener('click', () => showProjection(i));
+                }
+                
+                grid.appendChild(pixel);
+            }
+        }
+
+        // Show all projections
+        function showAllProjections() {
+            clearProjectionLines();
+            
+            for (let i = 0; i < 64; i++) {
+                setTimeout(() => {
+                    const inputRow = Math.floor(i / 8);
+                    const inputCol = i % 8;
+                    const outputStartRow = inputRow * 2 - 1;
+                    const outputStartCol = inputCol * 2 - 1;
+                    
+                    const inputPos = getPixelPosition('inputGrid', i, 8);
+                    
+                    for (let kr = 0; kr < 4; kr++) {
+                        for (let kc = 0; kc < 4; kc++) {
+                            const outputRow = outputStartRow + kr;
+                            const outputCol = outputStartCol + kc;
+                            
+                            if (outputRow >= 0 && outputRow < 16 && outputCol >= 0 && outputCol < 16) {
+                                const outputIndex = outputRow * 16 + outputCol;
+                                const outputPos = getPixelPosition('outputGrid', outputIndex, 16);
+                                
+                                const line = createProjectionLine(
+                                    inputPos.x, inputPos.y, 
+                                    outputPos.x, outputPos.y, 
+                                    'kernel-to-output'
+                                );
+                                line.style.opacity = 0.3;
+                                line.classList.add('active');
+                                projectionLines.push(line);
+                            }
+                        }
+                    }
+                }, i * 10);
+            }
+        }
+
+        // Auto demo
+        function toggleAutoDemo() {
+            const btn = document.getElementById('autoDemoBtn');
+            
+            if (autoDemoInterval) {
+                clearInterval(autoDemoInterval);
+                autoDemoInterval = null;
+                btn.textContent = '▶️ Start Auto Demo';
+                clearProjectionLines();
+            } else {
+                btn.textContent = '⏸️ Stop Auto Demo';
+                let currentPixel = 0;
+                const speed = parseInt(document.getElementById('speedSelect').value);
+                
+                autoDemoInterval = setInterval(() => {
+                    showProjection(currentPixel);
+                    currentPixel = (currentPixel + 1) % 64;
+                }, speed);
+            }
+        }
+
+        // Set visualization mode
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            clearProjectionLines();
+            if (autoDemoInterval) {
+                clearInterval(autoDemoInterval);
+                autoDemoInterval = null;
+                document.getElementById('autoDemoBtn').textContent = '▶️ Start Auto Demo';
+            }
+        }
+
+        // Reset visualization
+        function resetVisualization() {
+            clearProjectionLines();
+            if (autoDemoInterval) {
+                clearInterval(autoDemoInterval);
+                autoDemoInterval = null;
+                document.getElementById('autoDemoBtn').textContent = '▶️ Start Auto Demo';
+            }
+            
+            document.getElementById('calculationDisplay').innerHTML = `
+Klik pada input pixel untuk melihat bagaimana proyeksi bekerja.
+
+Proses ConvTranspose2d:
+1. Setiap input pixel (8×8) menjadi pusat operasi
+2. Kernel 4×4 ditempatkan dengan stride=2 
+3. Hasil dituliskan ke output 16×16
+4. Area overlap dijumlahkan
+            `;
+        }
+
+        // Initialize
+        function init() {
+            renderGrid('inputGrid', inputData, 8, 'input-pixel');
+            renderGrid('kernelGrid', kernelData, 4, 'kernel-pixel');
+            renderGrid('outputGrid', outputData, 16, 'output-pixel');
+            
+            // Resize SVG to match container
+            const container = document.querySelector('.visualization-container');
+            const svg = document.getElementById('projectionSvg');
+            svg.style.width = container.offsetWidth + 'px';
+            svg.style.height = container.offsetHeight + 'px';
+            svg.setAttribute('viewBox', `0 0 ${container.offsetWidth} ${container.offsetHeight}`);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            setTimeout(init, 100);
+        });
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
